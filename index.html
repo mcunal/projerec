@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Digit Recognition</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<h1>MNIST Digit Recognition</h1>
+
+<canvas id="canvas" width="280" height="280"></canvas>
+<br>
+<button onclick="clearCanvas()">Clear</button>
+<button onclick="recognizeImage()">Recognize</button>
+<br>
+<h2>Predicted Digit: <span id="predicted-number">Not Recognized Yet</span></h2>
+<h3>Confidence: <span id="confidence">Not Recognized Yet</span></h3>
+
+<script>
+    // Setup canvas and drawing context
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Event listeners for drawing on canvas
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseout", stopDrawing);
+
+    function startDrawing(e) {
+        isDrawing = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    // Clear canvas function
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('predicted-number').innerText = 'Not Recognized Yet';
+        document.getElementById('confidence').innerText = 'Not Recognized Yet';
+    }
+
+    // Recognize image function (send canvas data to Flask API)
+    function recognizeImage() {
+        const imageData = canvas.toDataURL('image/png');  // Get the canvas image in base64
+
+        fetch('http://127.0.0.1:5000/recognize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: imageData })  // Send the base64 image as JSON
+        })
+        .then(response => response.json())
+        .then(data => {
+            const prediction = data.prediction;
+            const confidence = data.confidence;
+            document.getElementById('predicted-number').innerText = "Predicted Digit: " + prediction;
+            document.getElementById('confidence').innerText = "Confidence: " + (confidence * 100).toFixed(2) + "%";
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>
