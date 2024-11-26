@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS support for frontend
 
 # Load pre-trained MNIST model
-model = load_model('mnist_model.h5')
+model = load_model('mnist_model.h4')
 
 # Home route
 @app.route('/')
